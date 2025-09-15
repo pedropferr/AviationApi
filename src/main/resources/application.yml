@@ -1,0 +1,13 @@
+resilience4j.retry:
+  instances:
+    externalService:
+      max-attempts: 3        # Número de tentativas
+      wait-duration: 2s      # Intervalo entre tentativas
+      retry-exceptions:
+        - org.springframework.web.client.ResourceAccessException
+        - java.io.IOException
+
+resilience4j.timelimiter:
+  instances:
+    externalService:
+      timeout-duration: 3s    # Timeout da chamada externa
