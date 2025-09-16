@@ -1,4 +1,4 @@
-package com.pedro.aviationapi.infrastructure.clients.AviationApi;
+package com.pedro.aviationapi.infrastructure.clients.aviationapi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

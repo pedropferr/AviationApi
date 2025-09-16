@@ -1,6 +1,8 @@
 package com.pedro.aviationapi.util;
 
 import static org.junit.jupiter.api.Assertions.*;
+
+import com.pedro.aviationapi.shared.validation.ValidationUtils;
 import org.junit.jupiter.api.Test;
 
 class ValidationUtilsTest {

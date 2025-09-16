@@ -1,9 +1,9 @@
 package com.pedro.aviationapi.application.services;
 
+import static com.pedro.aviationapi.shared.validation.ValidationUtils.validateAirportsCodes;
 import com.pedro.aviationapi.application.interfaces.AirportClientPort;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
-import static com.pedro.aviationapi.util.ValidationUtils.*;
-import com.pedro.aviationapi.shared.dtos.AirportResponse;
+import com.pedro.aviationapi.api.dtos.AirportResponse;
 import io.github.resilience4j.retry.annotation.Retry;
 import org.springframework.stereotype.Service;
 import java.util.concurrent.CompletableFuture;

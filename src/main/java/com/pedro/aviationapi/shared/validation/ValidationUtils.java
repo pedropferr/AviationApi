@@ -1,4 +1,4 @@
-package com.pedro.aviationapi.util;
+package com.pedro.aviationapi.shared.validation;
 
 public final class ValidationUtils {
 

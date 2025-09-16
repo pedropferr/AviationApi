@@ -1,6 +1,6 @@
 package com.pedro.aviationapi.application.interfaces;
 
-import com.pedro.aviationapi.shared.dtos.AirportResponse;
+import com.pedro.aviationapi.api.dtos.AirportResponse;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 

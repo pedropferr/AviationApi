@@ -1,4 +1,4 @@
-package com.pedro.aviationapi.shared.dtos;
+package com.pedro.aviationapi.api.dtos;
 public class AirportResponse {
     public String faaCode;
     public String icaoCode;

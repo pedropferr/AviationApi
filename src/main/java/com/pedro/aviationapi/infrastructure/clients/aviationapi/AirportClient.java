@@ -1,7 +1,7 @@
-package com.pedro.aviationapi.infrastructure.clients.AviationApi;
+package com.pedro.aviationapi.infrastructure.clients.aviationapi;
 
 import com.pedro.aviationapi.application.interfaces.AirportClientPort;
-import com.pedro.aviationapi.shared.dtos.AirportResponse;
+import com.pedro.aviationapi.api.dtos.AirportResponse;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
