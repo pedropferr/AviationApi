@@ -1,11 +1,12 @@
 package com.pedro.aviationapi.infrastructure.clients.aviationapi;
 
-import com.pedro.aviationapi.application.interfaces.AirportClientPort;
+import com.pedro.aviationapi.application.ports.AirportClientPort;
 import com.pedro.aviationapi.api.dtos.AirportResponse;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -30,45 +31,44 @@ public class AirportClient implements AirportClientPort {
      * @throws RuntimeException Se houver erro ao consultar a API externa
      */
     @Override
-    public CompletableFuture<List<AirportResponse>> fetchAirports(String codes) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                String url = BASE_URL + "v1/airports?apt=" + codes.trim();
+    public List<AirportResponse> fetchAirports(String codes) {
+        try {
+            String url = BASE_URL + "v1/airports?apt=" + codes.trim();
 
-                ResponseEntity<Map<String, List<AviationApiAirportResponse>>> responseEntity =
-                        restTemplate.exchange(
-                                url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {}
-                        );
+            ResponseEntity<Map<String, List<AviationApiAirportResponse>>> responseEntity =
+                    restTemplate.exchange(
+                            url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {}
+                    );
 
-                Map<String, List<AviationApiAirportResponse>> airportsMap = responseEntity.getBody();
+            Map<String, List<AviationApiAirportResponse>> airportsMap = responseEntity.getBody();
 
-                if (airportsMap == null || airportsMap.isEmpty())
-                    throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nenhum aeroporto encontrado");
+            if (airportsMap == null || airportsMap.isEmpty())
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nenhum aeroporto encontrado");
 
-                List<AirportResponse> result = new ArrayList<>();
+            List<AirportResponse> result = new ArrayList<>();
 
-                for (List<AviationApiAirportResponse> airportList : airportsMap.values()) {
-                    for (AviationApiAirportResponse airport : airportList) {
-                        result.add(new AirportResponse(
-                                airport.faaIdent,
-                                airport.icaoIdent,
-                                airport.facilityName,
-                                airport.city,
-                                airport.state,
-                                airport.county
-                        ));
-                    }
+            for (List<AviationApiAirportResponse> airportList : airportsMap.values()) {
+                for (AviationApiAirportResponse airport : airportList) {
+                    result.add(new AirportResponse(
+                            airport.faaIdent,
+                            airport.icaoIdent,
+                            airport.facilityName,
+                            airport.city,
+                            airport.state,
+                            airport.county,
+                            "API"
+                    ));
                 }
-
-                if (result.isEmpty())
-                    throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                            "Nenhum aeroporto encontrado para os códigos informados");
-
-                return result;
-
-            } catch (RestClientException e) {
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Erro ao consultar API externa", e);
             }
-        });
+
+            if (result.isEmpty())
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Nenhum aeroporto encontrado para os códigos informados");
+
+            return result;
+
+        } catch (RestClientException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Erro ao consultar API externa", e);
+        }
     }
 }

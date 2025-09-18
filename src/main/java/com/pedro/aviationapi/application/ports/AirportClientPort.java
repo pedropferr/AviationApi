@@ -1,9 +1,9 @@
-package com.pedro.aviationapi.application.interfaces;
+package com.pedro.aviationapi.application.ports;
 
 import com.pedro.aviationapi.api.dtos.AirportResponse;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public interface AirportClientPort {
-    CompletableFuture<List<AirportResponse>> fetchAirports(String code);
+    List<AirportResponse> fetchAirports(String code);
 }

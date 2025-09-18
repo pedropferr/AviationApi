@@ -21,29 +21,17 @@ public class AirportController {
     }
 
     /**
-     * Busca um ou mais aeroportos pelo(s) código(s).
-     * Exemplo de chamada: GET /api/aeroportos/AVL,KAVL
-     *
-     * @param codes Códigos separados por vírgula
+     * Busca um aeroportos pelo código FAA ou ICAO.
+     * Exemplo de chamada: GET /api/aeroportos/consultar
+     * body:
+     * {
+     * 	"airportCode": "AVL"
+     * }
+     * @param request Código do aéroporto a ser consultado
      * @return Lista de AirportResponse
      */
-    @GetMapping("/{codes}")
-    public CompletableFuture<ResponseEntity<List<AirportResponse>>> searchAirports(@PathVariable String codes) {
-        return airportService.getAirportsByCode(codes)
-                .thenApply(list -> {
-                    if (list.isEmpty())
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-                    return ResponseEntity.ok(list);
-                });
-    }
-
-    @GetMapping("/consultar")
-    public CompletableFuture<ResponseEntity<List<AirportResponse>>> getAirport(@Valid @RequestBody AirportRequest request) {
-        return airportService.getAirportsByCode(request.faaCode)
-                .thenApply(list -> {
-                    if (list.isEmpty())
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-                    return ResponseEntity.ok(list);
-                });
+    @PostMapping("/consultar")
+    public CompletableFuture<List<AirportResponse>> getAirport(@Valid @RequestBody AirportRequest request) {
+        return airportService.getAirportsByCode(request.airportCode);
     }
 }

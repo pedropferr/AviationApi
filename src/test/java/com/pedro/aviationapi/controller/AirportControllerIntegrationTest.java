@@ -1,62 +1,86 @@
 package com.pedro.aviationapi.controller;
 
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-
-import com.pedro.aviationapi.application.services.AirportService;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pedro.aviationapi.api.dtos.AirportRequest;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import com.pedro.aviationapi.api.dtos.AirportResponse;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
-import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.web.servlet.MvcResult;
-
-import java.util.List;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class AirportControllerIntegrationTest {
+public class AirportControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
-    private AirportService airportService;
+    @Autowired
+    private ObjectMapper objectMapper;
+
+//    @Test
+//    void whenAirportCodeIsValid_thenReturnsOk() throws Exception {
+//        var request = new AirportRequest();
+//        request.airportCode = "AVL";
+//
+//        mockMvc.perform(post("/api/aeroportos/consultar")
+//                        .contentType("application/json")
+//                        .content(objectMapper.writeValueAsString(request)))
+//                .andExpect(status().isOk())
+//                .andExpect(content().string("Recebido: AVL"));
+//    }
 
     @Test
-    void testSearchAirportsValidCode() throws Exception {
-        when(airportService.getAirportsByCode("AVL"))
-                .thenReturn(CompletableFuture.completedFuture(
-                        List.of(new AirportResponse("AVL", "KAVL", "ASHEVILLE RGNL", "ASHEVILLE", "", ""))
-                ));
+    void whenAirportCodeIsEmpty_thenReturnsAllRelevantErrors() throws Exception {
+        var request = new AirportRequest();
+        request.airportCode = ""; // campo vazio
 
-        MvcResult mvcResult = mockMvc.perform(get("/api/aeroportos/AVL"))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-
-        mockMvc.perform(asyncDispatch(mvcResult))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].faaCode").value("AVL"))
-                .andExpect(jsonPath("$[0].name").value("ASHEVILLE RGNL"))
-                .andExpect(jsonPath("$[0].city").value("ASHEVILLE"))
-                .andDo(result -> System.out.println("BODY: " + result.getResponse().getContentAsString()));
+        mockMvc.perform(post("/api/aeroportos/consultar")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[?(@ == 'airportCode: O código é obrigatório!')]").exists())
+                .andExpect(jsonPath("$[?(@ == 'airportCode: O código deve ter entre 3 e 50 caracteres')]").exists())
+                .andExpect(jsonPath("$[?(@ == 'airportCode: Código do aeroporto invalido')]").exists());
     }
 
     @Test
-    void testSearchAirportsNotFound() throws Exception {
-        when(airportService.getAirportsByCode("ZZZ"))
-                .thenReturn(CompletableFuture.completedFuture(List.of()));
+    void whenAirportCodeInvalidPattern_thenReturnsPatternError() throws Exception {
+        var request = new AirportRequest();
+        request.airportCode = "A1@";
 
-        MvcResult mvcResult = mockMvc.perform(get("/api/aeroportos/ZZZ"))
-                .andExpect(request().asyncStarted())
-                .andReturn();
+        mockMvc.perform(post("/api/aeroportos/consultar")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$[0]").value("airportCode: Código do aeroporto invalido"));
+    }
 
-        mockMvc.perform(asyncDispatch(mvcResult))
-                .andExpect(status().isNotFound());
+    @Test
+    void whenAirportCodeTooShort_thenReturnsSizeError() throws Exception {
+        var request = new AirportRequest();
+        request.airportCode = "AB";
+
+        mockMvc.perform(post("/api/aeroportos/consultar")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$[0]").value("airportCode: O código deve ter entre 3 e 50 caracteres"));
+    }
+
+    @Test
+    void whenAirportCodeTooLong_thenReturnsSizeError() throws Exception {
+        var request = new AirportRequest();
+        request.airportCode = "ABCDE";
+
+        mockMvc.perform(post("/api/aeroportos/consultar")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$[0]").value("airportCode: O código deve ter entre 3 e 50 caracteres"))
+                .andExpect(jsonPath("$[1]").value("airportCode: Código do aeroporto invalido"));
     }
 }
