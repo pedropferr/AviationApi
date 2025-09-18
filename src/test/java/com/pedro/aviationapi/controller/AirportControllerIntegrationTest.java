@@ -1,17 +1,24 @@
 package com.pedro.aviationapi.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pedro.aviationapi.api.controllers.AirportController;
 import com.pedro.aviationapi.api.dtos.AirportRequest;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.pedro.aviationapi.api.dtos.AirportResponse;
+import com.pedro.aviationapi.application.services.AirportService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.web.servlet.MvcResult;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
+@WebMvcTest(AirportController.class)
 public class AirportControllerIntegrationTest {
 
     @Autowired
@@ -20,22 +27,40 @@ public class AirportControllerIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-//    @Test
-//    void whenAirportCodeIsValid_thenReturnsOk() throws Exception {
-//        var request = new AirportRequest();
-//        request.airportCode = "AVL";
-//
-//        mockMvc.perform(post("/api/aeroportos/consultar")
-//                        .contentType("application/json")
-//                        .content(objectMapper.writeValueAsString(request)))
-//                .andExpect(status().isOk())
-//                .andExpect(content().string("Recebido: AVL"));
-//    }
+    @MockBean
+    private AirportService airportService;
+
+    @Test
+    void whenAirportCodeIsValid_thenReturnsOk() throws Exception {
+        AirportResponse response = new AirportResponse(
+                "AVL", "KAVL", "Asheville Regional",
+                "Asheville", "NC", "USA", "CACHE"
+        );
+
+        when(airportService.getAirportsByCode("AVL"))
+                .thenReturn(CompletableFuture.completedFuture(List.of(response)));
+
+        AirportRequest request = new AirportRequest();
+        request.airportCode = "AVL";
+
+        MvcResult mvcResult = mockMvc.perform(post("/api/aeroportos/consultar")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        mockMvc.perform(asyncDispatch(mvcResult))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].faaCode").value("AVL"))
+                .andExpect(jsonPath("$[0].icaoCode").value("KAVL"))
+                .andExpect(jsonPath("$[0].name").value("Asheville Regional"))
+                .andExpect(jsonPath("$[0].source").value("CACHE"));
+    }
 
     @Test
     void whenAirportCodeIsEmpty_thenReturnsAllRelevantErrors() throws Exception {
         var request = new AirportRequest();
-        request.airportCode = ""; // campo vazio
+        request.airportCode = "";
 
         mockMvc.perform(post("/api/aeroportos/consultar")
                         .contentType("application/json")

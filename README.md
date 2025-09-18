@@ -1,16 +1,17 @@
-# AviationAI
+# ✈️ AviationAI
 
 🚀 **Projeto Java Spring Boot** para gerenciamento e consumo de APIs relacionadas a aeroportos.
 
 [![Java](https://img.shields.io/badge/Java-17-blue)](https://www.oracle.com/java/)
 [![Maven](https://img.shields.io/badge/Maven-3.9.1-blue)](https://maven.apache.org/)
+[![Postgres](https://img.shields.io/badge/Postgres-16-blue)](https://www.postgresql.org/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 ---
 
-## **⚙️ Como Rodar o Projeto**
+## ⚙️ Como Rodar o Projeto
 
-**1.** Clone o repositório:
+**1. Clone o repositório:**
 
 ```bash
 git clone https://github.com/seu-usuario/aviationai.git
@@ -33,9 +34,29 @@ O servidor estará disponível em: http://localhost:8080.
 ```
 ---
 
-## **🧪 Como Rodar os Testes**
+## **🐘 Banco de Dados (Postgres via Docker)**
+**2.** Suba o container do PostgreSQL 16 com:
 
-**2.** Execute os testes automatizados:
+```bash
+docker run --name aviation-postgres \
+  -e POSTGRES_DB=aviationdb \
+  -e POSTGRES_USER=aviation \
+  -e POSTGRES_PASSWORD=aviation123 \
+  -p 5432:5432 \
+  -v postgres_data:/var/lib/postgresql/data \
+  -d postgres:16
+  
+  
+ 📌 Configurações padrão:
+    Banco: aviationdb
+    Usuário: aviation
+    Senha: aviation123
+    Porta: 5432
+```
+---
+
+## **🧪 Como Rodar os Testes**
+**3.** Execute os testes automatizados:
 
 ```bash
 Execute os testes automatizados com o Maven:
@@ -48,27 +69,28 @@ Os resultados no console e os relatórios na pasta target/surefire-reports.
 
 ## **🗂 Estrutura do Projeto**
 
-📦 **controller/**
-- **Explicação:** Contém as classes que recebem requisições HTTP (endpoints REST).
-- **Função:** Traduz chamadas externas em ações do sistema, chamando serviços da camada de `application`.
 
-📦 **application/**
-- **Explicação:** Camada de serviço com a lógica de negócio.
-- **Função:** Processar dados, aplicar regras de negócio e orquestrar chamadas entre controllers e infraestrutura.
+- **Organização em camadas (Clean Architecture)** → separação clara entre API, Aplicação, Infraestrutura e Shared, facilitando manutenção e evolução.
 
-📦 **infrastructure/**
-- **Explicação:** Responsável por integrações externas e persistência.
-- **Função:** Comunicação com APIs externas, bancos de dados ou sistemas de arquivos.
+- **Ports & Adapters** → promove baixo acoplamento, facilitando troca de implementações (ex.: mudar banco ou API externa).
 
-📦 **shared/**
-- **Explicação:** Classes e componentes compartilhados entre várias partes do projeto.
-- **Função:** Evitar duplicação de código, centralizar constantes, enums, DTOs e helpers genéricos.
 
-📦 **utils/**
-- **Explicação:** Funções utilitárias que não pertencem a nenhuma camada específica.
-- **Função:** Operações comuns, como formatação de datas, validações ou parsing de strings.
+### 📦 API
+- 🌐 **controllers/** → Controladores REST (`AirportController.java`)
+- 📑 **dtos/** → Objetos de transferência de dados (`AirportRequest`, `AirportResponse`)
 
-📦 **exception/**
-- **Explicação:** Tratamento de erros e exceções customizadas.
-- **Função:** Definir exceções do sistema e fornecer respostas consistentes via `@ControllerAdvice`.
+### 📦 Application
+- ⚙️ **services/** → Lógica de negócio (`AirportService`, `CacheCleanupService`)
+- 🔌 **ports/** → Interfaces de contrato (`AirportClientPort`, `AirportCachePort`)
+
+### 📦 Infrastructure
+- 🌍 **clients/** → Integração com APIs externas (`AirportClient`, `AviationApiAirportResponse`)
+- 💾 **persistence/**
+    - 🗄️ **entities/** → Entidades JPA (`AirportCacheEntity`)
+    - 📚 **repositories/** → Interfaces Spring Data (`AirportCacheRepository`)
+    - 🔄 **adapters/** → Conexão entre ports e repositories (`AirportCacheRepositoryAdapter`)
+
+### 📦 Shared
+- 🚨 **exceptions/** → Tratamento global de erros (`GlobalExceptionHandler`)
+- ✅ **validation/** → Utilitários de validação (`ValidationUtils`)
 ---
