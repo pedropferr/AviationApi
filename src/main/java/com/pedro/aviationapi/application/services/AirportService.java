@@ -33,7 +33,7 @@ public class AirportService {
      */
     @Async
     @TimeLimiter(name = "externalService")
-    @Retry(name = "externalService", fallbackMethod = "fallbackAsync")
+    @Retry(name = "externalService", fallbackMethod = "fallback")
     public CompletableFuture<List<AirportResponse>> getAirportsByCode(String code) {
         try {
             Optional<AirportCacheEntity> airportInCache = cacheAiportClient.findByCodeCriteria(code);

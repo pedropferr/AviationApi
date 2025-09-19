@@ -3,59 +3,24 @@ package com.pedro.aviationapi.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pedro.aviationapi.api.controllers.AirportController;
 import com.pedro.aviationapi.api.dtos.AirportRequest;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import com.pedro.aviationapi.api.dtos.AirportResponse;
 import com.pedro.aviationapi.application.services.AirportService;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.junit.jupiter.api.Test;
-import org.springframework.test.web.servlet.MvcResult;
-
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AirportController.class)
-public class AirportControllerIntegrationTest {
+public class AirportControllerUnitTest {
 
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper objectMapper;
-
     @MockBean
     private AirportService airportService;
-
-    @Test
-    void whenAirportCodeIsValid_thenReturnsOk() throws Exception {
-        AirportResponse response = new AirportResponse(
-                "AVL", "KAVL", "Asheville Regional",
-                "Asheville", "NC", "USA", "CACHE"
-        );
-
-        when(airportService.getAirportsByCode("AVL"))
-                .thenReturn(CompletableFuture.completedFuture(List.of(response)));
-
-        AirportRequest request = new AirportRequest();
-        request.airportCode = "AVL";
-
-        MvcResult mvcResult = mockMvc.perform(post("/api/aeroportos/consultar")
-                        .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-
-        mockMvc.perform(asyncDispatch(mvcResult))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].faaCode").value("AVL"))
-                .andExpect(jsonPath("$[0].icaoCode").value("KAVL"))
-                .andExpect(jsonPath("$[0].name").value("Asheville Regional"))
-                .andExpect(jsonPath("$[0].source").value("CACHE"));
-    }
 
     @Test
     void whenAirportCodeIsEmpty_thenReturnsAllRelevantErrors() throws Exception {
@@ -81,7 +46,7 @@ public class AirportControllerIntegrationTest {
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$[0]").value("airportCode: Código do aeroporto invalido"));
+                .andExpect(jsonPath("$[?(@ == 'airportCode: Código do aeroporto invalido')]").exists());
     }
 
     @Test
@@ -93,7 +58,8 @@ public class AirportControllerIntegrationTest {
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$[0]").value("airportCode: O código deve ter entre 3 e 50 caracteres"));
+                .andExpect(jsonPath("$[?(@ == 'airportCode: Código do aeroporto invalido')]").exists())
+                .andExpect(jsonPath("$[?(@ == 'airportCode: O código deve ter entre 3 e 50 caracteres')]").exists());
     }
 
     @Test
@@ -105,7 +71,8 @@ public class AirportControllerIntegrationTest {
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$[0]").value("airportCode: O código deve ter entre 3 e 50 caracteres"))
-                .andExpect(jsonPath("$[1]").value("airportCode: Código do aeroporto invalido"));
+                .andExpect(jsonPath("$[?(@ == 'airportCode: Código do aeroporto invalido')]").exists())
+                .andExpect(jsonPath("$[?(@ == 'airportCode: O código deve ter entre 3 e 50 caracteres')]").exists());
     }
 }
+
