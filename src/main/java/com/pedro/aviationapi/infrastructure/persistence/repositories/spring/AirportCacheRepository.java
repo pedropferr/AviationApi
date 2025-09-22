@@ -16,10 +16,10 @@ public interface AirportCacheRepository extends JpaRepository<AirportCacheEntity
     //Method Query
     Optional<AirportCacheEntity> findByFaaCodeOrIcaoCode(String faaCode, String icaoCode);
 
-    //Consulta JPQL
+    //Consulta
     @Query("SELECT a FROM AirportCacheEntity a " +
             "WHERE a.faaCode = :code OR a.icaoCode = :code")
-    Optional<AirportCacheEntity> findByCodeJpql(@Param("code") String code);
+    Optional<AirportCacheEntity> findByCodeHQL(@Param("code") String code);
 
     //Native Query
     @Query(value = "SELECT * FROM airport_cache a " +

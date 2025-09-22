@@ -17,12 +17,12 @@ import java.util.List;
 @Service
 public class AirportService {
 
-    private final AirportClientPort aiportClient;
-    private final AirportCachePort cacheAiportClient;
+    private final AirportClientPort aiportPort;
+    private final AirportCachePort cacheAiportPort;
 
-    public AirportService(AirportClientPort aiportClient, AirportCachePort cacheAiportClient) {
-        this.aiportClient = aiportClient;
-        this.cacheAiportClient = cacheAiportClient;
+    public AirportService(AirportClientPort aiportPort, AirportCachePort cacheAiportPort) {
+        this.aiportPort = aiportPort;
+        this.cacheAiportPort = cacheAiportPort;
     }
 
     /**
@@ -36,7 +36,7 @@ public class AirportService {
     @Retry(name = "externalService", fallbackMethod = "fallback")
     public CompletableFuture<List<AirportResponse>> getAirportsByCode(String code) {
         try {
-            Optional<AirportCacheEntity> airportInCache = cacheAiportClient.findByCodeCriteria(code);
+            Optional<AirportCacheEntity> airportInCache = cacheAiportPort.findByCodeCriteria(code);
 
             if (airportInCache.isPresent()) {
                 AirportCacheEntity entity = airportInCache.get();
@@ -50,7 +50,7 @@ public class AirportService {
                 return CompletableFuture.completedFuture(List.of(response));
             }
 
-            List<AirportResponse> responses = aiportClient.fetchAirports(code);
+            List<AirportResponse> responses = aiportPort.fetchAirports(code);
 
             responses.forEach(r -> {
                 AirportCacheEntity entity = new AirportCacheEntity(
@@ -58,7 +58,7 @@ public class AirportService {
                         r.city, r.state, r.country,
                         LocalDateTime.now().plusMinutes(5)
                 );
-                cacheAiportClient.save(entity);
+                cacheAiportPort.save(entity);
             });
 
             return CompletableFuture.completedFuture(responses);

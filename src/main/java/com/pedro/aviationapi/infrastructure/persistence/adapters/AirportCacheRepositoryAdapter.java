@@ -27,7 +27,7 @@ public class AirportCacheRepositoryAdapter implements AirportCachePort {
 
     @Override
     public Optional<AirportCacheEntity> findByCode(String code) {
-        return repository.findByCodeJpql(code);
+        return repository.findByCodeHQL(code);
     }
 
     @Override
