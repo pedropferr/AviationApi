@@ -7,6 +7,8 @@ public class AirportResponse {
     public String state;
     public String country;
     public String source;
+    public Boolean success;
+    public WeatherResponse weather;
 
     public AirportResponse(String faaCode, String icaoCode, String name,
                            String city, String state, String country, String source) {

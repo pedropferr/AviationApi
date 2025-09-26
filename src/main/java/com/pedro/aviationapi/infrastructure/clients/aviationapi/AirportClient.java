@@ -1,21 +1,16 @@
 package com.pedro.aviationapi.infrastructure.clients.aviationapi;
 
+import com.pedro.aviationapi.api.dtos.WeatherResponse;
 import com.pedro.aviationapi.application.ports.AirportClientPort;
 import com.pedro.aviationapi.api.dtos.AirportResponse;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 @Component
 public class AirportClient implements AirportClientPort {
@@ -26,14 +21,13 @@ public class AirportClient implements AirportClientPort {
     /**
      * Busca um aeroporto por código na api <a href="https://aviationapi.com/">...</a>
      *
-     * @param codes Códigos IATA ou ICAO do aeroporto
+     * @param code Código IATA ou ICAO do aeroporto
      * @return AirportResponse com os dados do aeroporto
-     * @throws RuntimeException Se houver erro ao consultar a API externa
      */
     @Override
-    public List<AirportResponse> fetchAirports(String codes) {
+    public AirportResponse fetchAirport(String code) {
         try {
-            String url = BASE_URL + "v1/airports?apt=" + codes.trim();
+            String url = BASE_URL + "v1/airports?apt=" + code.trim();
 
             ResponseEntity<Map<String, List<AviationApiAirportResponse>>> responseEntity =
                     restTemplate.exchange(
@@ -42,33 +36,72 @@ public class AirportClient implements AirportClientPort {
 
             Map<String, List<AviationApiAirportResponse>> airportsMap = responseEntity.getBody();
 
-            if (airportsMap == null || airportsMap.isEmpty())
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nenhum aeroporto encontrado");
-
-            List<AirportResponse> result = new ArrayList<>();
+            if(airportsMap == null || airportsMap.isEmpty())
+                return buildAirportResponse(code, new AviationApiAirportResponse(), false);
 
             for (List<AviationApiAirportResponse> airportList : airportsMap.values()) {
-                for (AviationApiAirportResponse airport : airportList) {
-                    result.add(new AirportResponse(
-                            airport.faaIdent,
-                            airport.icaoIdent,
-                            airport.facilityName,
-                            airport.city,
-                            airport.state,
-                            airport.county,
-                            "API"
-                    ));
-                }
+                if (!airportList.isEmpty())
+                    return buildAirportResponse(code, airportList.get(0), true);
             }
 
-            if (result.isEmpty())
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Nenhum aeroporto encontrado para os códigos informados");
-
-            return result;
-
-        } catch (RestClientException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Erro ao consultar API externa", e);
+            return buildAirportResponse(code, new AviationApiAirportResponse(), false);
+        } catch (Exception e) {
+            return buildAirportResponse(code, new AviationApiAirportResponse(), false);
         }
     }
+
+    public WeatherResponse fetchAirportWeather(String code) {
+        try {
+            String url = BASE_URL + "v1/weather/metar?apt=" + code.trim();
+
+            ResponseEntity<Map<String, List<AviationApiAirportWeatherResponse>>> responseEntity =
+                    restTemplate.exchange(
+                            url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {}
+                    );
+
+            Map<String, List<AviationApiAirportWeatherResponse>> airportsMap = responseEntity.getBody();
+
+            if (airportsMap == null || airportsMap.isEmpty())
+                return buildWeatherResponse(new AviationApiAirportWeatherResponse(), false);
+
+            for (List<AviationApiAirportWeatherResponse> airportList : airportsMap.values()) {
+                if (!airportList.isEmpty())
+                    return buildWeatherResponse(airportList.get(0), true);
+            }
+
+            return buildWeatherResponse(new AviationApiAirportWeatherResponse(), false);
+        } catch (Exception e) {
+            return buildWeatherResponse(new AviationApiAirportWeatherResponse(), false);
+        }
+    }
+
+    private AirportResponse buildAirportResponse(String code, AviationApiAirportResponse airportInfo, Boolean success) {
+
+        AirportResponse response = new AirportResponse();
+
+        response.faaCode = (airportInfo != null && airportInfo.faaIdent != null) ? airportInfo.faaIdent : code;
+        response.icaoCode = (airportInfo != null) ? airportInfo.icaoIdent : null;
+        response.name = (airportInfo != null && airportInfo.facilityName != null) ? airportInfo.facilityName : "Não encontrado";
+        response.city = (airportInfo != null) ? airportInfo.city : null;
+        response.state = (airportInfo != null) ? airportInfo.state : null;
+        response.country = (airportInfo != null) ? airportInfo.county : null;
+        response.source = "API";
+        response.success = success;
+
+        return response;
+    }
+
+    private WeatherResponse buildWeatherResponse(AviationApiAirportWeatherResponse weatherInfo, Boolean success) {
+
+        WeatherResponse weather = new WeatherResponse();
+        weather.temperature = (weatherInfo != null && weatherInfo.temp != null) ? weatherInfo.temp : "Não encontrado";
+        weather.wind = (weatherInfo != null) ? weatherInfo.wind : null;
+        weather.visibility = (weatherInfo != null) ? weatherInfo.visibility : null;
+        weather.success = success;
+        weather.source = "API";
+
+        return weather;
+    }
+
+
 }

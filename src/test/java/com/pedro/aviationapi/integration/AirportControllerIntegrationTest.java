@@ -10,10 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.Test;
-import java.util.List;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -37,21 +34,17 @@ public class AirportControllerIntegrationTest {
         );
 
         when(airportService.getAirportsByCode("AVL"))
-                .thenReturn(CompletableFuture.completedFuture(List.of(apiResponse)));
+                .thenReturn(apiResponse);
 
         AirportRequest request = new AirportRequest();
         request.airportCode = "AVL";
 
-        MvcResult mvcResult = mockMvc.perform(post("/api/aeroportos/consultar")
+        mockMvc.perform(post("/api/aeroportos/consultar")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-
-        mockMvc.perform(asyncDispatch(mvcResult))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].faaCode").value("AVL"))
-                .andExpect(jsonPath("$[0].source").value("API"));
+                .andExpect(jsonPath("faaCode").value("AVL"))
+                .andExpect(jsonPath("source").value("API"));
     }
 
     @Test
@@ -62,20 +55,16 @@ public class AirportControllerIntegrationTest {
         );
 
         when(airportService.getAirportsByCode("AVL"))
-                .thenReturn(CompletableFuture.completedFuture(List.of(cachedResponse)));
+                .thenReturn(cachedResponse);
 
         AirportRequest request = new AirportRequest();
         request.airportCode = "AVL";
 
-        MvcResult mvcResult = mockMvc.perform(post("/api/aeroportos/consultar")
+        mockMvc.perform(post("/api/aeroportos/consultar")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-
-        mockMvc.perform(asyncDispatch(mvcResult))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].faaCode").value("AVL"))
-                .andExpect(jsonPath("$[0].source").value("CACHE"));
+                .andExpect(jsonPath("faaCode").value("AVL"))
+                .andExpect(jsonPath("source").value("CACHE"));
     }
 }

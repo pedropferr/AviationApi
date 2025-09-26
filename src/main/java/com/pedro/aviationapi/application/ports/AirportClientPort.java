@@ -1,9 +1,9 @@
 package com.pedro.aviationapi.application.ports;
 
 import com.pedro.aviationapi.api.dtos.AirportResponse;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import com.pedro.aviationapi.api.dtos.WeatherResponse;
 
 public interface AirportClientPort {
-    List<AirportResponse> fetchAirports(String code);
+    AirportResponse fetchAirport(String code);
+    WeatherResponse fetchAirportWeather(String code);
 }

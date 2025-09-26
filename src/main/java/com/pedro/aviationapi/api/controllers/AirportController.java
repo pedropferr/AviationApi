@@ -31,7 +31,7 @@ public class AirportController {
      * @return Lista de AirportResponse
      */
     @PostMapping("/consultar")
-    public CompletableFuture<List<AirportResponse>> getAirport(@Valid @RequestBody AirportRequest request) {
+    public AirportResponse getAirport(@Valid @RequestBody AirportRequest request) {
         return airportService.getAirportsByCode(request.airportCode);
     }
 }
