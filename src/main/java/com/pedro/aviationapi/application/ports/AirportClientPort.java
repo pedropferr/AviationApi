@@ -1,9 +1,9 @@
 package com.pedro.aviationapi.application.ports;
 
-import com.pedro.aviationapi.api.dtos.AirportResponse;
-import com.pedro.aviationapi.api.dtos.WeatherResponse;
+import com.pedro.aviationapi.domain.model.Airport;
+import com.pedro.aviationapi.domain.model.Weather;
 
 public interface AirportClientPort {
-    AirportResponse fetchAirport(String code);
-    WeatherResponse fetchAirportWeather(String code);
+    Airport fetchAirport(String code);
+    Weather fetchAirportWeather(String code);
 }

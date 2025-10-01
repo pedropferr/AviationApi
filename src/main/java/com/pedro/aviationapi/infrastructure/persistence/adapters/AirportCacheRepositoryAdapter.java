@@ -11,6 +11,8 @@ import jakarta.persistence.criteria.Root;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -36,8 +38,8 @@ public class AirportCacheRepositoryAdapter implements AirportCachePort {
     }
 
     @Override
-    public AirportCacheEntity save(AirportCacheEntity airport) {
-        return repository.save(airport);
+    public void save(AirportCacheEntity airport) {
+        repository.save(airport);
     }
 
     @Override
@@ -61,5 +63,20 @@ public class AirportCacheRepositoryAdapter implements AirportCachePort {
         );
 
         return entityManager.createQuery(query).getResultStream().findFirst();
+    }
+
+    @Override
+    public List<AirportCacheEntity> findByExpiresAtBefore(LocalDateTime dateTime){
+        return repository.findByExpiresAtBefore(dateTime);
+    };
+
+    @Override
+    public void deleteAll(List<AirportCacheEntity> airportCacheEntities) {
+        repository.deleteAll(airportCacheEntities);
+    }
+
+    @Override
+    public Optional<AirportCacheEntity> findWithPlanesByFaaCodeOrIcaoCode(String code, String code2) {
+        return repository.findWithPlanesByFaaCodeOrIcaoCode(code, code2);
     }
 }

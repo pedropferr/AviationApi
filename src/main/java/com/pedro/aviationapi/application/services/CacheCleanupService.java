@@ -2,9 +2,13 @@ package com.pedro.aviationapi.application.services;
 
 import com.pedro.aviationapi.application.ports.AirportCachePort;
 import com.pedro.aviationapi.application.ports.AirportWeatherCachePort;
+import com.pedro.aviationapi.infrastructure.persistence.entities.AirportCacheEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class CacheCleanupService {
@@ -21,7 +25,11 @@ public class CacheCleanupService {
     @Scheduled(fixedRate = 300000)
     @Transactional
     public void cleanUpExpiredCache() {
-        cacheAiportClient.deleteAllExpired();
+        List<AirportCacheEntity> expiredAirports =
+                cacheAiportClient.findByExpiresAtBefore(LocalDateTime.now());
+
+        if (!expiredAirports.isEmpty())
+            cacheAiportClient.deleteAll(expiredAirports);
     }
 
     // Roda a cada 5 minutos

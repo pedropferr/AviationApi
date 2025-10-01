@@ -1,8 +1,8 @@
 package com.pedro.aviationapi.infrastructure.clients.aviationapi;
 
-import com.pedro.aviationapi.api.dtos.WeatherResponse;
 import com.pedro.aviationapi.application.ports.AirportClientPort;
-import com.pedro.aviationapi.api.dtos.AirportResponse;
+import com.pedro.aviationapi.domain.model.Airport;
+import com.pedro.aviationapi.domain.model.Weather;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +25,7 @@ public class AirportClient implements AirportClientPort {
      * @return AirportResponse com os dados do aeroporto
      */
     @Override
-    public AirportResponse fetchAirport(String code) {
+    public Airport fetchAirport(String code) {
         try {
             String url = BASE_URL + "v1/airports?apt=" + code.trim();
 
@@ -50,7 +50,7 @@ public class AirportClient implements AirportClientPort {
         }
     }
 
-    public WeatherResponse fetchAirportWeather(String code) {
+    public Weather fetchAirportWeather(String code) {
         try {
             String url = BASE_URL + "v1/weather/metar?apt=" + code.trim();
 
@@ -75,32 +75,29 @@ public class AirportClient implements AirportClientPort {
         }
     }
 
-    private AirportResponse buildAirportResponse(String code, AviationApiAirportResponse airportInfo, Boolean success) {
+    private Airport buildAirportResponse(String code, AviationApiAirportResponse airportInfo, Boolean success) {
 
-        AirportResponse response = new AirportResponse();
-
-        response.faaCode = (airportInfo != null && airportInfo.faaIdent != null) ? airportInfo.faaIdent : code;
-        response.icaoCode = (airportInfo != null) ? airportInfo.icaoIdent : null;
-        response.name = (airportInfo != null && airportInfo.facilityName != null) ? airportInfo.facilityName : "Não encontrado";
-        response.city = (airportInfo != null) ? airportInfo.city : null;
-        response.state = (airportInfo != null) ? airportInfo.state : null;
-        response.country = (airportInfo != null) ? airportInfo.county : null;
-        response.source = "API";
-        response.success = success;
-
-        return response;
+        return Airport.builder()
+                .faaCode((airportInfo != null && airportInfo.faaIdent != null) ? airportInfo.faaIdent : code)
+                .icaoCode((airportInfo != null) ? airportInfo.icaoIdent : null)
+                .name((airportInfo != null && airportInfo.facilityName != null) ? airportInfo.facilityName : "Não encontrado")
+                .state((airportInfo != null) ? airportInfo.city : null)
+                .country((airportInfo != null) ? airportInfo.county : null)
+                .city((airportInfo != null) ? airportInfo.city : null)
+                .source("API")
+                .success(success)
+                .build();
     }
 
-    private WeatherResponse buildWeatherResponse(AviationApiAirportWeatherResponse weatherInfo, Boolean success) {
+    private Weather buildWeatherResponse(AviationApiAirportWeatherResponse weatherInfo, Boolean success) {
 
-        WeatherResponse weather = new WeatherResponse();
-        weather.temperature = (weatherInfo != null && weatherInfo.temp != null) ? weatherInfo.temp : "Não encontrado";
-        weather.wind = (weatherInfo != null) ? weatherInfo.wind : null;
-        weather.visibility = (weatherInfo != null) ? weatherInfo.visibility : null;
-        weather.success = success;
-        weather.source = "API";
-
-        return weather;
+        return Weather.builder()
+                .temperature((weatherInfo != null && weatherInfo.temp != null) ? weatherInfo.temp : "Não encontrado")
+                .wind((weatherInfo != null) ? weatherInfo.wind : null)
+                .visibility((weatherInfo != null) ? weatherInfo.visibility : null)
+                .success(success)
+                .source("API")
+                .build();
     }
 
 

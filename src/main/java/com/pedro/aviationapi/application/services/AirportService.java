@@ -1,21 +1,25 @@
 package com.pedro.aviationapi.application.services;
 
+import com.pedro.aviationapi.api.dtos.PlaneResponse;
 import com.pedro.aviationapi.api.dtos.WeatherResponse;
 import com.pedro.aviationapi.application.ports.AirportCachePort;
 import com.pedro.aviationapi.application.ports.AirportClientPort;
 import com.pedro.aviationapi.application.ports.AirportWeatherCachePort;
+import com.pedro.aviationapi.domain.model.Airport;
+import com.pedro.aviationapi.domain.model.Weather;
 import com.pedro.aviationapi.infrastructure.persistence.entities.AirportCacheEntity;
 import com.pedro.aviationapi.infrastructure.persistence.entities.AirportWeatherCacheEntity;
-import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import com.pedro.aviationapi.api.dtos.AirportResponse;
+import com.pedro.aviationapi.infrastructure.persistence.entities.PlaneEntity;
 import io.github.resilience4j.retry.annotation.Retry;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import static com.pedro.aviationapi.shared.util.PlaneFactory.generatePlanes;
 
 @Service
 public class AirportService {
@@ -40,7 +44,7 @@ public class AirportService {
     public AirportResponse getAirportsByCode(String code) {
         try {
             AirportResponse response = getAirportInfo(code);
-            response.weather = getAirportWeatherInfo(code);
+            response.setWeather(getAirportWeatherInfo(code));
 
             return response;
         } catch (Exception e) {
@@ -50,27 +54,52 @@ public class AirportService {
 
     private AirportResponse getAirportInfo(String code) {
         try {
+            Optional<AirportCacheEntity> teste = cacheAiportPort.findByCode(code);
             Optional<AirportCacheEntity> airportInCache = cacheAiportPort.findByCodeCriteria(code);
 
             if (airportInCache.isPresent()) {
                 AirportCacheEntity entity = airportInCache.get();
 
-                return new AirportResponse(
-                        entity.faaCode, entity.icaoCode, entity.name,
-                        entity.city, entity.state, entity.country,
-                        "CACHE"
-                );
+                var response = AirportResponse.builder()
+                        .faaCode(entity.getFaaCode())
+                        .icaoCode(entity.getIcaoCode())
+                        .name(entity.getName())
+                        .city(entity.getCity())
+                        .state(entity.getState())
+                        .country(entity.getCountry())
+                        .source("CACHE")
+                        .build();
+
+                response.setPlanes(buildPLanesResponse(entity.getPlanes()));
+
+                return response;
             }
 
-            AirportResponse response = aiportPort.fetchAirport(code);
+            Airport airport = aiportPort.fetchAirport(code);
+            AirportResponse response = AirportResponse.builder()
+                    .faaCode(airport.getFaaCode())
+                    .icaoCode(airport.getIcaoCode())
+                    .name(airport.getName())
+                    .city(airport.getCity())
+                    .state(airport.getState())
+                    .country(airport.getCountry())
+                    .source(airport.getSource())
+                    .build();
 
-            if (!response.success) return response;
+            if (!airport.getSuccess()) return response;
 
-            AirportCacheEntity entity = new AirportCacheEntity(
-                    response.faaCode, response.icaoCode, response.name,
-                    response.city, response.state, response.country,
-                    LocalDateTime.now().plusMinutes(5)
-            );
+            AirportCacheEntity entity = AirportCacheEntity.builder()
+                    .faaCode(response.getFaaCode())
+                    .icaoCode(response.getIcaoCode())
+                    .name(response.getName())
+                    .city(response.getCity())
+                    .state(response.getState())
+                    .country(response.getCountry())
+                    .expiresAt(LocalDateTime.now().plusMinutes(5))
+                    .build();
+
+            entity.setPlanes(generatePlanes());
+
             cacheAiportPort.save(entity);
 
             return response;
@@ -87,19 +116,32 @@ public class AirportService {
             if (weatherInCache.isPresent()) {
                 AirportWeatherCacheEntity entity = weatherInCache.get();
 
-                return new WeatherResponse(
-                        entity.temperature, entity.wind, entity.visibility,"CACHE"
-                );
+                return WeatherResponse.builder()
+                        .temperature(entity.getTemperature())
+                        .wind(entity.getWind())
+                        .visibility(entity.getVisibility())
+                        .source("CACHE")
+                        .build();
             }
 
-            WeatherResponse response = aiportPort.fetchAirportWeather(code);
+            Weather weather = aiportPort.fetchAirportWeather(code);
+            WeatherResponse response = WeatherResponse.builder()
+                    .temperature(weather.getTemperature())
+                    .wind(weather.getWind())
+                    .visibility(weather.getVisibility())
+                    .source(weather.getSource())
+                    .build();
 
-            if (!response.success) return response;
+            if (!weather.getSuccess()) return response;
 
-            AirportWeatherCacheEntity entity = new AirportWeatherCacheEntity(
-                    code, response.temperature, response.wind,
-                    response.visibility, LocalDateTime.now().plusMinutes(5)
-            );
+            AirportWeatherCacheEntity entity = AirportWeatherCacheEntity.builder()
+                    .stationId(code)
+                    .temperature(response.getTemperature())
+                    .wind(response.getWind())
+                    .visibility(response.getVisibility())
+                    .expiresAt(LocalDateTime.now().plusMinutes(5))
+                    .build();
+
             cacheAiportWeatherPort.save(entity);
 
             return response;
@@ -109,15 +151,29 @@ public class AirportService {
         }
     }
 
+    private List<PlaneResponse> buildPLanesResponse(List<PlaneEntity> planes) {
+        List<PlaneResponse> dtos = new ArrayList<>();
+
+        for (PlaneEntity plane : planes) {
+            PlaneResponse dto = PlaneResponse.builder()
+                    .registration(plane.getRegistration())
+                    .model(plane.getModel())
+                    .manufacturer(plane.getManufacturer())
+                    .yearManufacture(plane.getYearManufacture())
+                    .build();
+
+            dtos.add(dto);
+        }
+        return dtos;
+    }
 
     /**
      * Metodo chamado quando todas as tentativas falham
      */
-    public CompletableFuture<AirportResponse> fallback(String code, Throwable ex) {
-        AirportResponse response = new AirportResponse();
-        response.faaCode = code;
-        response.source = "FALLBACK";
-        response.name = "Não disponível";
-        return CompletableFuture.completedFuture(response);
+    public AirportResponse fallback(String code, Throwable ex) {
+        return AirportResponse.builder()
+                .faaCode(code)
+                .source("FALLBACK")
+                .name("Não disponível").build();
     }
 }

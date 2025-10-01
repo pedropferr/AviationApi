@@ -1,6 +1,7 @@
 package com.pedro.aviationapi.infrastructure.persistence.entities;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -9,33 +10,27 @@ import java.time.LocalDateTime;
         indexes = {
                 @Index(name = "station_id", columnList = "stationId")
         })
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@Builder
 public class AirportWeatherCacheEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    private Long id;
 
     // dados retornados pela API externa
     @Column(nullable = false, unique = true, length = 10)
-    public String stationId;
-    public String temperature;
-    public String wind;
-    public String visibility;
+    private String stationId;
+    private String temperature;
+    private String wind;
+    private String visibility;
 
     // controle de cache
+    @Builder.Default
     @Column(nullable = false)
-    public LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now();
     @Column(nullable = false)
-    public LocalDateTime expiresAt;
-
-    protected AirportWeatherCacheEntity() {}
-
-    public AirportWeatherCacheEntity(String stationId, String temperature, String wind,
-                                     String visibility, LocalDateTime expiresAt) {
-
-        this.stationId = stationId;
-        this.temperature = temperature;
-        this.wind = wind;
-        this.visibility = visibility;
-        this.expiresAt = expiresAt;
-    }
+    private LocalDateTime expiresAt;
 }

@@ -1,14 +1,13 @@
-package com.pedro.aviationapi.api.dtos;
+package com.pedro.aviationapi.domain.model;
 
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import java.util.List;
 
 @Getter
 @Setter
 @Builder
-public class AirportResponse {
+public class Airport {
     private String faaCode;
     private String icaoCode;
     private String name;
@@ -16,6 +15,5 @@ public class AirportResponse {
     private String state;
     private String country;
     private String source;
-    private WeatherResponse weather;
-    private List<PlaneResponse> planes;
+    private Boolean success;
 }

@@ -4,11 +4,7 @@ import com.pedro.aviationapi.api.dtos.AirportRequest;
 import com.pedro.aviationapi.application.services.AirportService;
 import com.pedro.aviationapi.api.dtos.AirportResponse;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/aeroportos")
@@ -32,6 +28,6 @@ public class AirportController {
      */
     @PostMapping("/consultar")
     public AirportResponse getAirport(@Valid @RequestBody AirportRequest request) {
-        return airportService.getAirportsByCode(request.airportCode);
+        return airportService.getAirportsByCode(request.getAirportCode());
     }
 }
