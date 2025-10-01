@@ -22,12 +22,4 @@ public class PlaneEntity {
     @Column(length = 4)
     private int yearManufacture;
 
-    // ----------------------------------------------------
-    // Mapeamento Many-to-One
-    // @JoinColumn cria a coluna 'airport_id' na tabela 'planes'
-    // O campo 'airport' é o que foi referenciado no 'mappedBy' em AirportCacheEntity
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "airport_id", nullable = false)
-    private AirportCacheEntity airport;
-
 }

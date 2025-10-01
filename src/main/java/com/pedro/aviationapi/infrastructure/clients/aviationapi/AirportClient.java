@@ -93,8 +93,8 @@ public class AirportClient implements AirportClientPort {
 
         return Weather.builder()
                 .temperature((weatherInfo != null && weatherInfo.temp != null) ? weatherInfo.temp : "Não encontrado")
-                .wind((weatherInfo != null) ? weatherInfo.wind : null)
-                .visibility((weatherInfo != null) ? weatherInfo.visibility : null)
+                .wind((weatherInfo != null) ? weatherInfo.wind : "")
+                .visibility((weatherInfo != null) ? weatherInfo.visibility : "")
                 .success(success)
                 .source("API")
                 .build();

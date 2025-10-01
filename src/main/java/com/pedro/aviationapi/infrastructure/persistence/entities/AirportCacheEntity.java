@@ -39,23 +39,7 @@ public class AirportCacheEntity {
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
-    // ----------------------------------------------------
-    // Mapeamento One-to-Many
-    // mappedBy aponta para o campo 'airport' em PlaneEntity
-    // CascadeType.ALL: Operações como persist, merge, remove no aeroporto
-    //                  serão propagadas para os aviões associados.
-    // FetchType.LAZY: Os aviões só serão carregados do BD quando você
-    //                 explicitamente acessar a lista (melhor para performance).
     @Builder.Default
-    @OneToMany(mappedBy = "airport", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlaneEntity> planes = new ArrayList<>();
-
-    public void addPlane(PlaneEntity plane) {
-        planes.add(plane); plane.setAirport(this);
-    }
-
-    public void setPlanes(List<PlaneEntity> planes) {
-        this.planes.clear();
-        planes.forEach(this::addPlane);
-    }
 }
